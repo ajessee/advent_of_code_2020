@@ -52,6 +52,11 @@ class ReportRepair
     @start_time = Time.now
     @set_size = set_size || 2
     @sum_to_check = sum_to_check || 2020
+    # This is where the magic happens.
+    # The array combination() method returns a nested array containing sets of unique combinations of all the numbers in the original array. 
+    # The set size is determined by the integer you pass in as argument.
+    # However, the time complexity of this increases significantly with larger set sizes.
+    # Apparently, the time complexity is (n choose k)
     array_of_sets = Array(@expense_report_array).combination(set_size)
     array_of_sets.each do |unique_set|
       @match = unique_set.reduce(&:+) == sum_to_check

@@ -1,48 +1,59 @@
 let filename = require.resolve('./customsDeclarations.txt')
 const fs = require('fs');
+// sync file read operation, since we don't need to optimize for web. Split on double newline.
 const customsFileData = fs.readFileSync(filename).toString().split(/\n{2,}/g);
-
+// create array of 'count objects', which we will use for count operations
 const countObjectArray = customsFileData.map(row => {
-  let dataArray = row.split('\n');
-  let infoObj = {
-    peopleInGroup: dataArray.length,
+  // each row represents one person's answers
+  const personAnswerArray = row.split('\n');
+  let countObj = {
+    peopleInGroup: personAnswerArray.length,
     answersAnyoneSelected: [],
     answersEveryoneSelected: []
   }
-  dataArray.forEach((answerString, index) => {
-    let answersArray = answerString.split('');
-    infoObj[`person_${index + 1}`] = {
+  // iterate through a person's answers, add all answers to answersAnyoneSelected array
+  personAnswerArray.forEach((answerString, index) => {
+    const answersArray = answerString.split('');
+    countObj[`person_${index + 1}`] = {
       answers: answersArray,
       questionsAnswered: answerString.length
     }
-    infoObj.answersAnyoneSelected.push.apply(infoObj.answersAnyoneSelected, answersArray);
+    countObj.answersAnyoneSelected.push.apply(countObj.answersAnyoneSelected, answersArray);
   })
-  infoObj.answersAnyoneSelected = [...new Set(infoObj.answersAnyoneSelected)];
-  infoObj.answersAnyoneSelectedCount = infoObj.answersAnyoneSelected.length;
-  return infoObj;
+  // use Set to get unique answers from the whole group
+  countObj.answersAnyoneSelected = [...new Set(countObj.answersAnyoneSelected)];
+  // get unique answers count for summing
+  countObj.answersAnyoneSelectedCount = countObj.answersAnyoneSelected.length;
+  return countObj;
 })
 
 const getAnswersEveryoneSelected = () => {
-  countObjectArray.forEach(infoObj => {
-    infoObj.answersAnyoneSelected.forEach(answer => {
+  countObjectArray.forEach(countObj => {
+    // use the array of answers everyone in group selected to compare against each person's answer set
+    countObj.answersAnyoneSelected.forEach(answer => {
+      // default to true and set to false if we don't find a match
       let allAnsweredYes = true
-      for (key in infoObj) {
-        if (key.includes('person') && !infoObj[key].answers.includes(answer) && allAnsweredYes) {
+      for (key in countObj) {
+        // check all person nested objects, and if answer from answersAnyoneSelected is not in person's answer array, set allAnsweredYes to false
+        // third check of allAnsweredYes will skip subsequent matching answers - if there is one person who doesn't have matching answer, allAnsweredYes is false
+        if (key.includes('person') && !countObj[key].answers.includes(answer) && allAnsweredYes) {
           allAnsweredYes = false;
         }
       }
+      // if all people have answer in their answer array, they all selected it
       if (allAnsweredYes) {
-        infoObj.answersEveryoneSelected.push(answer)
+        countObj.answersEveryoneSelected.push(answer)
       }
     })
-    infoObj.answersEveryoneSelectedCount = infoObj.answersEveryoneSelected.length
+    // get shared answers count for summing
+    countObj.answersEveryoneSelectedCount = countObj.answersEveryoneSelected.length
   })
 }
 
 const getSumOfAnswersAnyoneSelected = () => {
   let totalSum = 0;
-  countObjectArray.forEach(infoObj => {
-    totalSum += infoObj.answersAnyoneSelectedCount
+  countObjectArray.forEach(countObj => {
+    totalSum += countObj.answersAnyoneSelectedCount
   })
   return totalSum;
 }
@@ -50,8 +61,8 @@ const getSumOfAnswersAnyoneSelected = () => {
 const getSumOfAnswersEveryoneSelected = () => {
   getAnswersEveryoneSelected();
   let totalSum = 0;
-  countObjectArray.forEach(infoObj => {
-    totalSum += infoObj.answersEveryoneSelectedCount
+  countObjectArray.forEach(countObj => {
+    totalSum += countObj.answersEveryoneSelectedCount
   })
   return totalSum;
 }

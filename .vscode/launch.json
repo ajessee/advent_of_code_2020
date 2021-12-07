@@ -11,7 +11,7 @@
       "skipFiles": [
         "<node_internals>/**"
       ],
-      "program": "${workspaceFolder}/day_6/CustomCustoms.js"
+      "program": "${workspaceFolder}/day_7/HandyHaversacks.js"
     }
   ]
 }
